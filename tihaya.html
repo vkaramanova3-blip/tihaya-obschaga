@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Тихая общага — Прототип</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f2f2f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .phone-frame {
+            width: 390px;
+            height: 844px;
+            background: #ffffff;
+            border-radius: 40px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.15), 0 0 0 12px #1c1c1e;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .notch {
+            position: absolute;
+            top: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 150px; height: 34px;
+            background: #1c1c1e;
+            border-bottom-left-radius: 18px;
+            border-bottom-right-radius: 18px;
+            z-index: 100;
+        }
+        .status-bar {
+            height: 47px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 24px 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1c1c1e;
+            z-index: 50;
+        }
+        .screen {
+            flex: 1;
+            overflow-y: auto;
+            position: relative;
+            padding: 0 20px;
+            scrollbar-width: none;
+        }
+        .screen::-webkit-scrollbar { display: none; }
+
+        .home-header { padding-top: 12px; padding-bottom: 20px; }
+        .home-header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        .home-title { font-size: 28px; font-weight: 700; color: #1c1c1e; line-height: 1.2; }
+        .home-subtitle { font-size: 14px; color: #8e8e93; margin-top: 4px; }
+        .status-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            margin-top: 10px; font-size: 13px; font-weight: 600;
+            color: #34c759; background: rgba(52,199,89,0.10);
+            padding: 6px 12px; border-radius: 20px;
+        }
+        .status-dot { width: 8px; height: 8px; background: #34c759; border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .settings-btn {
+            width: 40px; height: 40px; border-radius: 50%; background: #f2f2f7;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: background 0.2s; border: none;
+        }
+        .settings-btn:hover { background: #e5e5ea; }
+        .settings-btn svg { width: 22px; height: 22px; color: #8e8e93; }
+
+        .hero-card {
+            background: linear-gradient(135deg, #34c759 0%, #30d158 100%);
+            border-radius: 24px; padding: 28px 24px; color: white;
+            margin-bottom: 20px; position: relative; overflow: hidden;
+            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .hero-card:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(52,199,89,0.25); }
+        .hero-card::after { content: ''; position: absolute; top: -30px; right: -30px; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+        .hero-card::before { content: ''; position: absolute; bottom: -20px; left: -20px; width: 80px; height: 80px; background: rgba(255,255,255,0.08); border-radius: 50%; }
+        .hero-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; position: relative; z-index: 2; }
+        .hero-subtitle { font-size: 15px; opacity: 0.9; margin-bottom: 16px; position: relative; z-index: 2; }
+        .hero-features { display: flex; flex-direction: column; gap: 6px; position: relative; z-index: 2; }
+        .hero-feature { display: flex; align-items: center; gap: 8px; font-size: 13px; opacity: 0.85; }
+        .hero-feature svg { width: 16px; height: 16px; opacity: 0.9; flex-shrink: 0; }
+
+        .how-it-works {
+            background: #f2f2f7; border-radius: 20px; padding: 20px;
+            margin-bottom: 16px; cursor: pointer; transition: background 0.2s;
+        }
+        .how-it-works:hover { background: #e5e5ea; }
+        .section-title { font-size: 17px; font-weight: 600; color: #1c1c1e; margin-bottom: 16px; }
+        .steps { display: flex; justify-content: space-between; gap: 8px; }
+        .step { flex: 1; text-align: center; }
+        .step-icon { width: 48px; height: 48px; background: white; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .step-icon svg { width: 24px; height: 24px; color: #34c759; }
+        .step-text { font-size: 11px; color: #8e8e93; line-height: 1.3; }
+        .step-number { font-size: 11px; font-weight: 700; color: #34c759; margin-bottom: 2px; }
+
+        .info-block {
+            background: rgba(0,122,255,0.06); border-radius: 16px; padding: 16px 18px;
+            display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px;
+        }
+        .info-block svg { width: 20px; height: 20px; color: #007aff; flex-shrink: 0; margin-top: 1px; }
+        .info-text { font-size: 13px; color: #007aff; line-height: 1.4; }
+
+        .bottom-bar {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: linear-gradient(to top, white 70%, transparent);
+            padding: 20px 20px 34px; z-index: 60;
+        }
+        .main-btn {
+            width: 100%; background: #1c1c1e; color: white; border: none;
+            border-radius: 16px; padding: 18px; font-size: 17px; font-weight: 600;
+            cursor: pointer; transition: transform 0.15s, background 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .main-btn:active { transform: scale(0.97); }
+        .main-btn:hover { background: #2c2c2e; }
+        .main-btn svg { width: 20px; height: 20px; }
+        .btn-hint { text-align: center; font-size: 12px; color: #8e8e93; margin-top: 10px; }
+
+        .back-btn {
+            display: flex; align-items: center; gap: 4px; background: none; border: none;
+            font-size: 17px; color: #007aff; cursor: pointer; padding: 0;
+            margin-bottom: 16px; font-weight: 400;
+        }
+        .back-btn svg { width: 20px; height: 20px; }
+        .form-title { font-size: 28px; font-weight: 700; color: #1c1c1e; margin-bottom: 24px; }
+        .form-group { margin-bottom: 20px; }
+        .form-label {
+            font-size: 13px; font-weight: 600; color: #8e8e93;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            margin-bottom: 10px; display: block;
+        }
+        .select-box {
+            background: #f2f2f7; border-radius: 14px; padding: 14px 16px;
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .select-box:hover { background: #e5e5ea; }
+        .select-box span { font-size: 16px; color: #1c1c1e; }
+        .select-box svg { width: 18px; height: 18px; color: #8e8e93; }
+        .noise-options { display: flex; flex-direction: column; gap: 8px; }
+        .noise-option {
+            background: #f2f2f7; border-radius: 14px; padding: 16px;
+            display: flex; align-items: center; gap: 12px;
+            cursor: pointer; transition: all 0.2s; border: 2px solid transparent;
+        }
+        .noise-option:hover { background: #e5e5ea; }
+        .noise-option.selected { background: rgba(52,199,89,0.08); border-color: #34c759; }
+        .noise-option-icon { width: 36px; height: 36px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+        .noise-option-icon svg { width: 20px; height: 20px; color: #8e8e93; }
+        .noise-option.selected .noise-option-icon svg { color: #34c759; }
+        .noise-option-text { font-size: 15px; color: #1c1c1e; font-weight: 500; }
+        .noise-option.selected .noise-option-text { color: #34c759; font-weight: 600; }
+        .submit-btn {
+            width: 100%; background: #34c759; color: white; border: none;
+            border-radius: 16px; padding: 18px; font-size: 17px; font-weight: 600;
+            cursor: pointer; transition: transform 0.15s, background 0.2s; margin-top: 8px;
+        }
+        .submit-btn:active { transform: scale(0.97); }
+        .submit-btn:hover { background: #30d158; }
+
+        .status-screen { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 60px; }
+        .status-icon-large {
+            width: 100px; height: 100px; background: rgba(52,199,89,0.1);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            margin-bottom: 24px; animation: scaleIn 0.4s ease;
+        }
+        @keyframes scaleIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .status-icon-large svg { width: 48px; height: 48px; color: #34c759; }
+        .status-title { font-size: 24px; font-weight: 700; color: #1c1c1e; margin-bottom: 8px; }
+        .status-card { background: #f2f2f7; border-radius: 20px; padding: 24px; width: 100%; margin: 24px 0; text-align: left; }
+        .status-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .status-row:last-child { margin-bottom: 0; }
+        .status-label { font-size: 14px; color: #8e8e93; }
+        .status-value { font-size: 15px; font-weight: 600; color: #1c1c1e; }
+        .status-value.green { color: #34c759; }
+        .status-value.yellow { color: #ff9500; }
+        .status-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        .secondary-btn {
+            width: 100%; background: #f2f2f7; color: #1c1c1e; border: none;
+            border-radius: 16px; padding: 16px; font-size: 16px; font-weight: 500;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .secondary-btn:hover { background: #e5e5ea; }
+        .danger-btn {
+            width: 100%; background: #fff2f2; color: #ff3b30; border: none;
+            border-radius: 16px; padding: 16px; font-size: 16px; font-weight: 500;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .danger-btn:hover { background: #ffe5e5; }
+
+        .repeat-warning { width: 100px; height: 100px; background: rgba(255,149,0,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; }
+        .repeat-warning svg { width: 48px; height: 48px; color: #ff9500; }
+        .repeat-title { color: #ff9500; }
+        .repeat-card { background: rgba(255,149,0,0.06); }
+        .repeat-btn {
+            width: 100%; background: #ff9500; color: white; border: none;
+            border-radius: 16px; padding: 18px; font-size: 17px; font-weight: 600;
+            cursor: pointer; transition: transform 0.15s;
+        }
+        .repeat-btn:active { transform: scale(0.97); }
+
+        .unavailable-icon { width: 100px; height: 100px; background: rgba(255,59,48,0.08); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; }
+        .unavailable-icon svg { width: 48px; height: 48px; color: #ff3b30; }
+        .unavailable-title { color: #ff3b30; }
+        .unavailable-text { color: #8e8e93; font-size: 15px; line-height: 1.5; max-width: 280px; }
+        .unavailable-btn { width: 100%; background: #ff3b30; color: white; border: none; border-radius: 16px; padding: 18px; font-size: 17px; font-weight: 600; cursor: pointer; opacity: 0.5; margin-top: 24px; }
+
+        .overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4); z-index: 90;
+            opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s;
+        }
+        .overlay.active { opacity: 1; visibility: visible; }
+        .bottom-sheet {
+            position: absolute; bottom: 0; left: 0; right: 0; background: white;
+            border-radius: 24px 24px 0 0; padding: 24px 24px 34px; z-index: 95;
+            transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        .bottom-sheet.active { transform: translateY(0); }
+        .sheet-handle { width: 36px; height: 5px; background: #d1d1d6; border-radius: 3px; margin: 0 auto 20px; }
+        .sheet-title { font-size: 20px; font-weight: 700; color: #1c1c1e; margin-bottom: 16px; }
+        .sheet-text { font-size: 15px; color: #3a3a3c; line-height: 1.6; margin-bottom: 24px; }
+        .sheet-btn { width: 100%; background: #1c1c1e; color: white; border: none; border-radius: 16px; padding: 18px; font-size: 17px; font-weight: 600; cursor: pointer; }
+
+        .settings-list { margin-top: 8px; }
+        .settings-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid #f2f2f7; cursor: pointer; }
+        .settings-item-left { display: flex; align-items: center; gap: 12px; }
+        .settings-icon { width: 32px; height: 32px; background: #f2f2f7; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        .settings-icon svg { width: 18px; height: 18px; color: #8e8e93; }
+        .settings-text { font-size: 16px; color: #1c1c1e; }
+        .settings-arrow svg { width: 18px; height: 18px; color: #c7c7cc; }
+
+        .demo-controls {
+            position: fixed; right: 30px; top: 50%;
+            transform: translateY(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 200;
+        }
+        .demo-btn {
+            background: #1c1c1e; color: white; border: none; border-radius: 12px;
+            padding: 12px 16px; font-size: 13px; font-weight: 500; cursor: pointer;
+            white-space: nowrap; transition: background 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .demo-btn:hover { background: #3a3a3c; }
+        .demo-btn.active { background: #34c759; }
+        .demo-label { font-size: 11px; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; text-align: center; }
+
+        .screen-content { animation: fadeSlide 0.3s ease; }
+        @keyframes fadeSlide { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .home-indicator { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); width: 134px; height: 5px; background: #1c1c1e; border-radius: 3px; z-index: 100; }
+
+        .selector-popup {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.3); z-index: 80; display: flex; align-items: flex-end;
+            opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s;
+        }
+        .selector-popup.active { opacity: 1; visibility: visible; }
+        .selector-sheet { background: white; border-radius: 20px 20px 0 0; padding: 20px; width: 100%; max-height: 50%; overflow-y: auto; }
+        .selector-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; text-align: center; }
+        .selector-option { padding: 14px; text-align: center; font-size: 17px; border-radius: 12px; cursor: pointer; margin-bottom: 6px; }
+        .selector-option:hover { background: #f2f2f7; }
+        .selector-option.selected { background: rgba(52,199,89,0.1); color: #34c759; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<div class="phone-frame">
+    <div class="notch"></div>
+    <div class="status-bar">
+        <span id="clock">22:22</span>
+        <span>&#9679;&#9679;&#9679;&#9679;&#9679;</span>
+    </div>
+    <div class="screen" id="screen"></div>
+    <div class="home-indicator"></div>
+
+    <div class="overlay" id="overlay"></div>
+    <div class="bottom-sheet" id="bottomSheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">Как пользоваться сервисом</div>
+        <div class="sheet-text">
+            Вы сообщаете о нарушении анонимно. Администрация получает сигнал и принимает меры. Вы можете отслеживать статус обращения без личного конфликта.
+        </div>
+        <button class="sheet-btn" id="sheetBtn">Понятно</button>
+    </div>
+
+    <div class="selector-popup" id="selectorPopup">
+        <div class="selector-sheet" id="selectorSheet">
+            <div class="selector-title" id="selectorTitle">Выберите этаж</div>
+            <div id="selectorOptions"></div>
+        </div>
+    </div>
+</div>
+
+<div class="demo-controls">
+    <div class="demo-label">Демо-режим</div>
+    <button class="demo-btn active" data-screen="home" id="btn-home">Главный экран</button>
+    <button class="demo-btn" data-screen="form" id="btn-form">Подача жалобы</button>
+    <button class="demo-btn" data-screen="status" id="btn-status">Жалоба отправлена</button>
+    <button class="demo-btn" data-screen="repeat" id="btn-repeat">Повторное нарушение</button>
+    <button class="demo-btn" data-screen="unavailable" id="btn-unavailable">Недоступно</button>
+    <button class="demo-btn" data-screen="settings" id="btn-settings">Настройки</button>
+</div>
+
+<script>
+(function() {
+    'use strict';
+    var currentScreen = 'home';
+    var selectedFloor = null;
+    var selectedRoom = null;
+    var selectedNoise = null;
+
+    function updateClock() {
+        var now = new Date();
+        var h = String(now.getHours()).padStart(2, '0');
+        var m = String(now.getMinutes()).padStart(2, '0');
+        var el = document.getElementById('clock');
+        if (el) el.textContent = h + ':' + m;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function showScreen(name) {
+        currentScreen = name;
+        document.querySelectorAll('.demo-btn').forEach(function(btn) {
+            btn.classList.remove('active');
+        });
+        var activeBtn = document.getElementById('btn-' + name);
+        if (activeBtn) activeBtn.classList.add('active');
+
+        switch(name) {
+            case 'home': renderHome(); break;
+            case 'form': renderForm(); break;
+            case 'status': renderStatus(); break;
+            case 'repeat': renderRepeat(); break;
+            case 'unavailable': renderUnavailable(); break;
+            case 'settings': renderSettings(); break;
+        }
+    }
+
+    function renderHome() {
+        var screen = document.getElementById('screen');
+        if (!screen) return;
+        screen.innerHTML = '<div class="screen-content">' +
+            '<div class="home-header">' +
+                '<div class="home-header-top">' +
+                    '<div>' +
+                        '<div class="home-title">Тихая общага</div>' +
+                        '<div class="home-subtitle">Поддержание тишины после 23:00</div>' +
+                        '<div class="status-badge">' +
+                            '<span class="status-dot"></span>' +
+                            'Жалобы принимаются' +
+                        '</div>' +
+                    '</div>' +
+                    '<button class="settings-btn" id="settingsBtnHome">' +
+                        '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>' +
+                    '</button>' +
+                '</div>' +
+            '</div>' +
+            '<div class="hero-card" id="heroCard">' +
+                '<div class="hero-title">Сообщить о шуме</div>' +
+                '<div class="hero-subtitle">Анонимно и безопасно</div>' +
+                '<div class="hero-features">' +
+                    '<div class="hero-feature">' +
+                        '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>' +
+                        'Отправьте жалобу за 1 минуту' +
+                    '</div>' +
+                    '<div class="hero-feature">' +
+                        '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>' +
+                        'Администрация получит уведомление' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="how-it-works" id="howItWorks">' +
+                '<div class="section-title">Как это работает</div>' +
+                '<div class="steps">' +
+                    '<div class="step">' +
+                        '<div class="step-icon">' +
+                            '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>' +
+                        '</div>' +
+                        '<div class="step-number">1</div>' +
+                        '<div class="step-text">Укажите источник шума</div>' +
+                    '</div>' +
+                    '<div class="step">' +
+                        '<div class="step-icon">' +
+                            '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>' +
+                        '</div>' +
+                        '<div class="step-number">2</div>' +
+                        '<div class="step-text">Отправьте жалобу</div>' +
+                    '</div>' +
+                    '<div class="step">' +
+                        '<div class="step-icon">' +
+                            '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>' +
+                        '</div>' +
+                        '<div class="step-number">3</div>' +
+                        '<div class="step-text">Получите статус обращения</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="info-block">' +
+                '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
+                '<div class="info-text">Не нужно вступать в конфликт лично — система передаст жалобу администрации</div>' +
+            '</div>' +
+            '<div style="height: 120px;"></div>' +
+        '</div>' +
+        '<div class="bottom-bar">' +
+            '<button class="main-btn" id="mainBtnHome">' +
+                '<svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>' +
+                'Пожаловаться на шум' +
+            '</button>' +
+            '<div class="btn-hint">Ваше обращение можно отправить анонимно</div>' +
+        '</div>';
+
+        var heroCard = document.getElementById('heroCard');
+        if (heroCard) heroCard.addEventListener('click', function() { showScreen('form'); });
+        var mainBtn = document.getElementById('mainBtnHome');
+        if (mainBtn) mainBtn.addEventListener('click', function() { showScreen('form'); });
+        var howItWorks = document.getElementById('howItWorks');
+        if (howItWorks) howItWorks.addEventListener('click', function() { openSheet(); });
+        var settingsBtn = document.getElementById('settingsBtnHome');
+        if (settingsBtn) settingsBtn.addEventListener('click', function() { showScreen('settings'); });
+    }
+
+    function renderForm() {
+        var screen = document.getElementById('screen');
+        if (!screen) return;
+        screen.innerHTML = '<div class="screen-content" style="padding-bottom: 20px;">' +
+            '<button class="back-btn" id="backBtnForm">' +
+                '<svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>' +
+                'Назад' +
+            '</button>' +
+            '<div class="form-title">Сообщить о шуме</div>' +
+            '<div class="form-group">' +
+                '<label class="form-label">Этаж</label>' +
+                '<div class="select-box" id="selectFloor">' +
+                    '<span id="floorValue">' + (selectedFloor || 'Выберите этаж') + '</span>' +
+                    '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>' +
+                '</div>' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<label class="form-label">Комната</label>' +
+                '<div class="select-box" id="selectRoom">' +
+                    '<span id="roomValue">' + (selectedRoom || 'Выберите комнату') + '</span>' +
+                    '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>' +
+                '</div>' +
+            '</div>' +
+            '<div class="form-group">' +
+                '<label class="form-label">Тип шума</label>' +
+                '<div class="noise-options">' +
+                    '<div class="noise-option ' + (selectedNoise === 'music' ? 'selected' : '') + '" data-noise="music">' +
+                        '<div class="noise-option-icon">' +
+                            '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>' +
+                        '</div>' +
+                        '<span class="noise-option-text">Громкая музыка</span>' +
+                    '</div>' +
+                    '<div class="noise-option ' + (selectedNoise === 'party' ? 'selected' : '') + '" data-noise="party">' +
+                        '<div class="noise-option-icon">' +
+                            '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>' +
+                        '</div>' +
+                        '<span class="noise-option-text">Вечеринка</span>' +
+                    '</div>' +
+                    '<div class="noise-option ' + (selectedNoise === 'shout' ? 'selected' : '') + '" data-noise="shout">' +
+                        '<div class="noise-option-icon">' +
+                            '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>' +
+                        '</div>' +
+                        '<span class="noise-option-text">Крики</span>' +
+                    '</div>' +
+                    '<div class="noise-option ' + (selectedNoise === 'other' ? 'selected' : '') + '" data-noise="other">' +
+                        '<div class="noise-option-icon">' +
+                            '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
+                        '</div>' +
+                        '<span class="noise-option-text">Другое</span>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+            '<button class="submit-btn" id="submitBtn">Отправить анонимно</button>' +
+            '<div class="btn-hint" style="margin-top: 12px;">Ваше обращение будет отправлено без указания личных данных</div>' +
+        '</div>';
+
+        var backBtn = document.getElementById('backBtnForm');
+        if (backBtn) backBtn.addEventListener('click', function() { showScreen('home'); });
+        var selectFloor = document.getElementById('selectFloor');
+        if (selectFloor) selectFloor.addEventListener('click', function() { openSelector('floor'); });
+        var selectRoom = document.getElementById('selectRoom');
+        if (selectRoom) selectRoom.addEventListener('click', function() { openSelector('room'); });
+        document.querySelectorAll('.noise-option').forEach(function(opt) {
+            opt.addEventListener('click', function() {
+                selectNoise(this.getAttribute('data-noise'));
+            });
+        });
+        var submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) submitBtn.addEventListener('click', submitComplaint);
+    }
+
+    function renderStatus() {
+        var screen = document.getElementById('screen');
+        if (!screen) return;
+        var now = new Date();
+        var timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        screen.innerHTML = '<div class="screen-content status-screen">' +
+            '<div class="status-icon-large">' +
+                '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>' +
+            '</div>' +
+            '<div class="status-title">Жалоба отправлена</div>' +
+            '<div style="color: #8e8e93; font-size: 15px;">Спасибо, что сообщили</div>' +
+            '<div class="status-card">' +
+                '<div class="status-row">' +
+                    '<span class="status-label">Обращение</span>' +
+                    '<span class="status-value">&#8470;142</span>' +
+                '</div>' +
+                '<div class="status-row">' +
+                    '<span class="status-label">Статус</span>' +
+                    '<span class="status-value green">Передано администрации</span>' +
+                '</div>' +
+                '<div class="status-row">' +
+                    '<span class="status-label">Время</span>' +
+                    '<span class="status-value">' + timeStr + '</span>' +
+                '</div>' +
+            '</div>' +
+            '<div class="status-actions">' +
+                '<button class="secondary-btn" id="trackBtn">' +
+                    '<svg style="width:18px;height:18px;vertical-align:middle;margin-right:6px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>' +
+                    'Следить за статусом' +
+                '</button>' +
+                '<button class="danger-btn" id="cancelBtn">Отменить обращение</button>' +
+            '</div>' +
+        '</div>';
+
+        var trackBtn = document.getElementById('trackBtn');
+        if (trackBtn) trackBtn.addEventListener('click', function() { showScreen('status'); });
+        var cancelBtn = document.getElementById('cancelBtn');
+        if (cancelBtn) cancelBtn.addEventListener('click', function() { showScreen('home'); });
+    }
+
+    function renderRepeat() {
+        var screen = document.getElementById('screen');
+        if (!screen) return;
+        screen.innerHTML = '<div class="screen-content status-screen">' +
+            '<div class="repeat-warning">' +
+                '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>' +
+            '</div>' +
+            '<div class="status-title repeat-title">Шум продолжается</div>' +
+            '<div style="color: #8e8e93; font-size: 15px;">Предыдущая жалоба &#8470;142</div>' +
+            '<div class="status-card repeat-card">' +
+                '<div class="status-row">' +
+                    '<span class="status-label">Обращение</span>' +
+                    '<span class="status-value">&#8470;142</span>' +
+                '</div>' +
+                '<div class="status-row">' +
+                    '<span class="status-label">Статус</span>' +
+                    '<span class="status-value yellow">В обработке</span>' +
+                '</div>' +
+                '<div class="status-row">' +
+                    '<span class="status-label">Реакция</span>' +
+                    '<span class="status-value">Не получена</span>' +
+                '</div>' +
+            '</div>' +
+            '<div class="status-actions">' +
+                '<button class="repeat-btn" id="repeatBtn">Подать повторную жалобу</button>' +
+                '<button class="secondary-btn" id="backRepeatBtn" style="margin-top:8px;">Вернуться назад</button>' +
+            '</div>' +
+        '</div>';
+
+        var repeatBtn = document.getElementById('repeatBtn');
+        if (repeatBtn) repeatBtn.addEventListener('click', function() { showScreen('status'); });
+        var backBtn = document.getElementById('backRepeatBtn');
+        if (backBtn) backBtn.addEventListener('click', function() { showScreen('home'); });
+    }
+
+    function renderUnavailable() {
+        var screen = document.getElementById('screen');
+        if (!screen) return;
+        screen.innerHTML = '<div class="screen-content status-screen">' +
+            '<div class="unavailable-icon">' +
+                '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>' +
+            '</div>' +
+            '<div class="status-title unavailable-title">Сервис временно недоступен</div>' +
+            '<div class="unavailable-text">Попробуйте позже или обратитесь к администрации напрямую</div>' +
+            '<button class="unavailable-btn" disabled>Жалобы недоступны</button>' +
+            '<div style="margin-top: 24px; padding: 16px; background: #f2f2f7; border-radius: 16px; width: 100%;">' +
+                '<div style="font-size: 13px; color: #8e8e93; margin-bottom: 8px;">Контакты администрации</div>' +
+                '<div style="font-size: 15px; color: #1c1c1e; font-weight: 500;">+7 (XXX) XXX-XX-XX</div>' +
+                '<div style="font-size: 14px; color: #8e8e93; margin-top: 4px;">Круглосуточно</div>' +
+            '</div>' +
+        '</div>';
+    }
+
+    function renderSettings() {
+        var screen = document.getElementById('screen');
+        if (!screen) return;
+        screen.innerHTML = '<div class="screen-content">' +
+            '<button class="back-btn" id="backBtnSettings">' +
+                '<svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>' +
+                'Назад' +
+            '</button>' +
+            '<div class="form-title">Настройки</div>' +
+            '<div class="settings-list">' +
+                '<div class="settings-item">' +
+                    '<div class="settings-item-left">' +
+                        '<div class="settings-icon">' +
+                            '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>' +
+                        '</div>' +
+                        '<span class="settings-text">Уведомления</span>' +
+                    '</div>' +
+                    '<div class="settings-arrow">' +
+                        '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="settings-item">' +
+                    '<div class="settings-item-left">' +
+                        '<div class="settings-icon">' +
+                            '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>' +
+                        '</div>' +
+                        '<span class="settings-text">Анонимность</span>' +
+                    '</div>' +
+                    '<div class="settings-arrow">' +
+                        '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="settings-item">' +
+                    '<div class="settings-item-left">' +
+                        '<div class="settings-icon">' +
+                            '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>' +
+                        '</div>' +
+                        '<span class="settings-text">Язык</span>' +
+                    '</div>' +
+                    '<div style="display:flex;align-items:center;gap:4px;">' +
+                        '<span style="font-size:14px;color:#8e8e93;">Русский</span>' +
+                        '<svg style="width:18px;height:18px;color:#c7c7cc;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="settings-item">' +
+                    '<div class="settings-item-left">' +
+                        '<div class="settings-icon">' +
+                            '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
+                        '</div>' +
+                        '<span class="settings-text">История жалоб</span>' +
+                    '</div>' +
+                    '<div class="settings-arrow">' +
+                        '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="settings-item">' +
+                    '<div class="settings-item-left">' +
+                        '<div class="settings-icon">' +
+                            '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>' +
+                        '</div>' +
+                        '<span class="settings-text">Правила общежития</span>' +
+                    '</div>' +
+                    '<div class="settings-arrow">' +
+                        '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+
+        var backBtn = document.getElementById('backBtnSettings');
+        if (backBtn) backBtn.addEventListener('click', function() { showScreen('home'); });
+    }
+
+    function openSheet() {
+        var overlay = document.getElementById('overlay');
+        var sheet = document.getElementById('bottomSheet');
+        if (overlay) overlay.classList.add('active');
+        if (sheet) sheet.classList.add('active');
+    }
+
+    function closeSheet() {
+        var overlay = document.getElementById('overlay');
+        var sheet = document.getElementById('bottomSheet');
+        if (overlay) overlay.classList.remove('active');
+        if (sheet) sheet.classList.remove('active');
+    }
+
+    function openSelector(type) {
+        var popup = document.getElementById('selectorPopup');
+        var title = document.getElementById('selectorTitle');
+        var options = document.getElementById('selectorOptions');
+        if (!popup || !title || !options) return;
+
+        if (type === 'floor') {
+            title.textContent = 'Выберите этаж';
+            var html = '';
+            var floors = [1,2,3,4,5,6,7,8,9,10];
+            for (var i = 0; i < floors.length; i++) {
+                var f = floors[i];
+                var sel = selectedFloor === f + ' этаж' ? 'selected' : '';
+                html += '<div class="selector-option ' + sel + '" data-floor="' + f + ' этаж">' + f + ' этаж</div>';
+            }
+            options.innerHTML = html;
+            document.querySelectorAll('.selector-option').forEach(function(opt) {
+                opt.addEventListener('click', function() {
+                    selectFloor(this.getAttribute('data-floor'));
+                });
+            });
+        } else {
+            title.textContent = 'Выберите комнату';
+            var html = '';
+            var rooms = [101,102,103,104,105,106,107,108,109,110];
+            for (var i = 0; i < rooms.length; i++) {
+                var r = rooms[i];
+                var sel = selectedRoom === r + ' комната' ? 'selected' : '';
+                html += '<div class="selector-option ' + sel + '" data-room="' + r + ' комната">' + r + '</div>';
+            }
+            options.innerHTML = html;
+            document.querySelectorAll('.selector-option').forEach(function(opt) {
+                opt.addEventListener('click', function() {
+                    selectRoom(this.getAttribute('data-room'));
+                });
+            });
+        }
+        popup.classList.add('active');
+    }
+
+    function closeSelector() {
+        var popup = document.getElementById('selectorPopup');
+        if (popup) popup.classList.remove('active');
+    }
+
+    function selectFloor(val) {
+        selectedFloor = val;
+        closeSelector();
+        renderForm();
+    }
+
+    function selectRoom(val) {
+        selectedRoom = val;
+        closeSelector();
+        renderForm();
+    }
+
+    function selectNoise(type) {
+        selectedNoise = type;
+        renderForm();
+    }
+
+    function submitComplaint() {
+        if (!selectedFloor || !selectedRoom || !selectedNoise) {
+            alert('Пожалуйста, заполните все поля');
+            return;
+        }
+        showScreen('status');
+    }
+
+    document.querySelectorAll('.demo-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var screenName = this.getAttribute('data-screen');
+            if (screenName) showScreen(screenName);
+        });
+    });
+
+    var overlay = document.getElementById('overlay');
+    if (overlay) overlay.addEventListener('click', closeSheet);
+    var sheetBtn = document.getElementById('sheetBtn');
+    if (sheetBtn) sheetBtn.addEventListener('click', closeSheet);
+    var selectorPopup = document.getElementById('selectorPopup');
+    if (selectorPopup) selectorPopup.addEventListener('click', closeSelector);
+
+    renderHome();
+})();
+</script>
+
+</body>
+</html>
